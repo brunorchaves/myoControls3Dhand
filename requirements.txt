@@ -1,0 +1,7 @@
+pyomyo
+numpy
+tensorflow
+scikit-learn
+matplotlib
+tomlkit
+pandas
