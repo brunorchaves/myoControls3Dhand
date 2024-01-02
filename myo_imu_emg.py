@@ -1,6 +1,25 @@
 from pyomyo import Myo, emg_mode
 import sys
 import math
+import socket
+
+# host, port = "127.0.0.1", 25001
+# data = "1,2,3"
+
+# # SOCK_STREAM means TCP socket
+# sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# try:
+#     # Connect to the server and send the data
+#     sock.connect((host, port))
+#     sock.sendall(data.encode("utf-8"))
+#     response = sock.recv(1024).decode("utf-8")
+#     print (response)
+
+# finally:
+#     sock.close()
+
+
 
 def euler_from_quaternion(x, y, z, w):
     """
@@ -77,17 +96,14 @@ if __name__ == '__main__':
         # print(str(emg[6])+ str(emg[7]))
         # print(euler_angles)
         # Take the absolute value of each element in the list
-        if(emg[6] != None and emg[7]  != None):
-            emg_6 = float(str(emg[6]))
-            emg_7 = float(str(emg[7]))
+        if None not in emg[:7]:
+            emg_float = [float(element) for element in emg]
+            print(emg_float)
+        if None not in euler_angles[:2]:
+            euler_angles_float = [float(element) for element in euler_angles]
+            print(euler_angles_float)
+            
 
-            absolute_emg = abs(emg_6)+abs(emg_7)
-            # Calculate the mean of the absolute values
-            mean_absolute_emg = (absolute_emg) / 2
-            if(printDivider == 0):
-                printDivider = 5
-                if(mean_absolute_emg >= 8):
-                    print("closed")
-                else :
-                    print("open")
-            printDivider = printDivider-1
+            
+
+            
