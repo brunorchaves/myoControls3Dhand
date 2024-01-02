@@ -21,7 +21,7 @@ def worker(q):
 	m.add_imu_handler(add_to_queue)
 	
 	# Orange logo and bar LEDs
-	m.set_leds([128, 128, 0], [128, 128, 0])
+	m.set_leds([128, 128, 255], [128, 128, 255])
 	# Vibrate to know we connected okay
 	m.vibrate(1)
 	

@@ -27,12 +27,12 @@ def euler_from_quaternion(x, y, z, w):
 
 class MyoDataPrinter:
     def __init__(self):
-        self.emg_data = []
+        self.emg_data = [None] * 8
         self.euler_angles = []
-        self.myo = Myo(sys.argv[1] if len(sys.argv) >= 2 else None, mode=emg_mode.RAW)
+        self.myo = Myo(mode=emg_mode.RAW)
         self.myo.add_imu_handler(self.on_imu)
         self.myo.add_emg_handler(self.on_emg)
-        self.myo.set_leds([128, 0, 128], [128, 0, 128])
+        self.myo.set_leds([128, 128, 255], [128, 128, 255])  # purple logo and bar LEDs
         self.myo.connect()
 
     def on_imu(self, quat, acc, gyro):
@@ -41,7 +41,7 @@ class MyoDataPrinter:
         # print('Accelerometer:', acc)
         # print('Gyroscope:', gyro)
         self.euler_angles = euler_from_quaternion(quat[0], quat[1], quat[2], quat[3])
-        roll, pitch, yaw = self.euler_angles
+        roll, pitch, yaw = list(self.euler_angles)
         # print('Euler Angles (in radians):')
         # print('Roll:', roll)
         # print('Pitch:', pitch)
@@ -49,10 +49,8 @@ class MyoDataPrinter:
         # print()
 
     def on_emg(self, emg, moving):
-        # print('EMG Data:')
-        # print('EMG:', emg)
-        self.emg_data = emg
-        # print()
+        self.emg_data = list(emg)
+        
 
     def get_emg(self):
         return self.emg_data
@@ -71,9 +69,25 @@ class MyoDataPrinter:
 if __name__ == '__main__':
     myo_printer = MyoDataPrinter()
     run_flag = True
+    printDivider = 5
     while run_flag:
         myo_printer.run()
         emg = myo_printer.get_emg()
         euler_angles = myo_printer.get_euler_angles()
-        print(emg)
-        print(euler_angles)
+        # print(str(emg[6])+ str(emg[7]))
+        # print(euler_angles)
+        # Take the absolute value of each element in the list
+        if(emg[6] != None and emg[7]  != None):
+            emg_6 = float(str(emg[6]))
+            emg_7 = float(str(emg[7]))
+
+            absolute_emg = abs(emg_6)+abs(emg_7)
+            # Calculate the mean of the absolute values
+            mean_absolute_emg = (absolute_emg) / 2
+            if(printDivider == 0):
+                printDivider = 5
+                if(mean_absolute_emg >= 8):
+                    print("closed")
+                else :
+                    print("open")
+            printDivider = printDivider-1
