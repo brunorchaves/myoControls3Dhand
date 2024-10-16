@@ -21,3 +21,12 @@ Additionally, the Unity project associated with this repository can be found [he
 
    ```bash
    pip install -r requirements.txt
+
+
+## TO DO
+
+1. Print EMG with IMU - Done
+2. Dataset generator using computer vision - Done
+3. Gesture classification and euler angle sending through socket at the same time - Done
+4. Multithreading to separe data collection, gesture classication and sending orientation data - In progress
+
