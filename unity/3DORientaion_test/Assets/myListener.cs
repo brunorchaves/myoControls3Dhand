@@ -78,6 +78,11 @@ public class MyListener : MonoBehaviour
             float.Parse(stringArray[1]),
             float.Parse(stringArray[2]));
 
+         // Exibir os valores recebidos corretamente formatados
+        Debug.Log($"Yaw: {result.x}");
+        Debug.Log($"Pitch: {result.y}");
+        Debug.Log($"Roll: {result.z}");
+
         return result;
     }
 

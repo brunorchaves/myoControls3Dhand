@@ -1,12 +1,12 @@
 from pyomyo import Myo, emg_mode
 import sys
 import math
-import tensorflow as tf
+# import tensorflow as tf
 import pandas as pd
-from tensorflow import keras
-from tensorflow.keras import layers
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+# from tensorflow import keras
+# from tensorflow.keras import layers
+# from sklearn.model_selection import train_test_split
+# from sklearn.preprocessing import StandardScaler
 from tomlkit import boolean
 from threading import Lock, Thread
 import matplotlib.pyplot as plt
@@ -20,15 +20,15 @@ import numpy as np
 import socket
 
 host, port = "127.0.0.1", 25001
-TEST_MODE = True
+TEST_MODE = False
 
 
 # Load the trained model
-model = tf.keras.models.load_model("gesturePredictor_RNN.model")
-print("model loaded")
+# model = tf.keras.models.load_model("gesturePredictor_RNN.model")
+# print("model loaded")
 
-import logging
-tf.get_logger().setLevel(logging.ERROR)
+# import logging
+# tf.get_logger().setLevel(logging.ERROR)
 
 data = []
 
@@ -140,38 +140,38 @@ if __name__ == '__main__':
                 data = f"{yaw},{pitch},{roll}"
                 print(emg_float)
                 print(euler_angles)
-                while quantSamples < samples:
-                    channel_0.append(emg_float[0])
-                    channel_1.append(emg_float[1])
-                    channel_2.append(emg_float[2])
-                    channel_3.append(emg_float[3])
-                    channel_4.append(emg_float[4])
-                    channel_5.append(emg_float[5])
-                    channel_6.append(emg_float[6])
-                    channel_7.append(emg_float[7])
-                    quantSamples += 1
-                # Concatenate all channels into one horizontal array
-                arrayLine = np.concatenate((channel_0, channel_1, channel_2, channel_3, channel_4, channel_5, channel_6, channel_7), axis=None)
-                Single_gesture = arrayLine.reshape(1, samples * 8)
+                # while quantSamples < samples:
+                #     channel_0.append(emg_float[0])
+                #     channel_1.append(emg_float[1])
+                #     channel_2.append(emg_float[2])
+                #     channel_3.append(emg_float[3])
+                #     channel_4.append(emg_float[4])
+                #     channel_5.append(emg_float[5])
+                #     channel_6.append(emg_float[6])
+                #     channel_7.append(emg_float[7])
+                #     quantSamples += 1
+                # # Concatenate all channels into one horizontal array
+                # arrayLine = np.concatenate((channel_0, channel_1, channel_2, channel_3, channel_4, channel_5, channel_6, channel_7), axis=None)
+                # Single_gesture = arrayLine.reshape(1, samples * 8)
 
-                prediction = model.predict(Single_gesture)
-                class_names = ['Relaxed', 'Fist', 'Spock', 'Pointing']
-                predicted_class = class_names[np.argmax(prediction[0])]
-                print("Previsão:", predicted_class)
-                # Check if the predicted gesture is different from the previous one
-                if predicted_class != prev_gesture:
-                    # Press keys based on the predicted gesture
-                    if predicted_class == 'Relaxed':
-                        keyboard.press_and_release('1')
-                    elif predicted_class == 'Fist':
-                        keyboard.press_and_release('2')
-                    elif predicted_class == 'Spock':
-                        keyboard.press_and_release('3')
-                    elif predicted_class == 'Pointing':
-                        keyboard.press_and_release('4')
+                # prediction = model.predict(Single_gesture)
+                # class_names = ['Relaxed', 'Fist', 'Spock', 'Pointing']
+                # predicted_class = class_names[np.argmax(prediction[0])]
+                # print("Previsão:", predicted_class)
+                # # Check if the predicted gesture is different from the previous one
+                # if predicted_class != prev_gesture:
+                #     # Press keys based on the predicted gesture
+                #     if predicted_class == 'Relaxed':
+                #         keyboard.press_and_release('1')
+                #     elif predicted_class == 'Fist':
+                #         keyboard.press_and_release('2')
+                #     elif predicted_class == 'Spock':
+                #         keyboard.press_and_release('3')
+                #     elif predicted_class == 'Pointing':
+                #         keyboard.press_and_release('4')
 
-                    # Update the previous gesture
-                    prev_gesture = predicted_class
+                #     # Update the previous gesture
+                #     prev_gesture = predicted_class
 
                 if(TEST_MODE == False):
                     sock.sendall(data.encode("utf-8"))
