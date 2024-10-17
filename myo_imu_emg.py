@@ -1,12 +1,8 @@
 from pyomyo import Myo, emg_mode
 import sys
 import math
-# import tensorflow as tf
 import pandas as pd
-# from tensorflow import keras
-# from tensorflow.keras import layers
-# from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import StandardScaler
+
 from tomlkit import boolean
 from threading import Lock, Thread
 import matplotlib.pyplot as plt
@@ -18,41 +14,115 @@ import keyboard  # Install with: pip install keyboard
 import multiprocessing
 import numpy as np
 import socket
+import queue
 
+# Queue for sharing data between threads
+data_queue = queue.Queue()
 host, port = "127.0.0.1", 25001
-TEST_MODE = False
-
-
-# Load the trained model
-# model = tf.keras.models.load_model("gesturePredictor_RNN.model")
-# print("model loaded")
-
-# import logging
-# tf.get_logger().setLevel(logging.ERROR)
-
 data = []
 
-samples = 5
-columns = samples
-rows = 8
-totalSamples = samples * 8
-dimensions = (rows, columns)
-arraySize = (samples * rows) + 1
+TEST_MODE = True
 
-# Arrays to store EMG data for each channel
-channel_0 = []
-channel_1 = []
-channel_2 = []
-channel_3 = []
-channel_4 = []
-channel_5 = []
-channel_6 = []
-channel_7 = []
+# TensorFlow classification thread
+def classify_gestures():
+     
+    import tensorflow as tf
+    from tensorflow import keras
+    from tensorflow.keras import layers
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+    import logging
+    tf.get_logger().setLevel(logging.ERROR)
+    samples = 5
+    columns = samples
+    rows = 8
+    totalSamples = samples * 8
+    dimensions = (rows, columns)
+    arraySize = (samples * rows) + 1
 
-labelArray = np.zeros(1)
-dimensions_f = (0, arraySize)
-gestureArray = np.empty(dimensions_f)
-quantSamples = 0
+    # Arrays to store EMG data for each channel
+    channel_0 = []
+    channel_1 = []
+    channel_2 = []
+    channel_3 = []
+    channel_4 = []
+    channel_5 = []
+    channel_6 = []
+    channel_7 = []
+
+    labelArray = np.zeros(1)
+    dimensions_f = (0, arraySize)
+    gestureArray = np.empty(dimensions_f)
+    quantSamples = 0
+    initializedVaribles = True
+    model = tf.keras.models.load_model("gesturePredictor_RNN.model")
+    print("model loaded")
+
+
+    prev_gesture = None
+    samples = 5  # Change as per your requirement
+    # Arrays to store EMG data for each channel (this can be organized better)
+    channel_0 = []
+    channel_1 = []
+    channel_2 = []
+    channel_3 = []
+    channel_4 = []
+    channel_5 = []
+    channel_6 = []
+    channel_7 = []
+    class_names = ['Relaxed', 'Fist', 'Spock', 'Pointing']
+
+    while True:
+        try:
+                quantSamples = 0
+                channel_0 = []
+                channel_1 = []
+                channel_2 = []
+                channel_3 = []
+                channel_4 = []
+                channel_5 = []
+                channel_6 = []
+                channel_7 = []
+                while quantSamples < samples:
+
+                    emg_data = data_queue.get()  # Adjust timeout as needed
+                    if None not in emg_data[:7] :
+                        emg_float = [float(element) for element in emg_data]
+                        # print(emg_float)
+
+                        channel_0.append(emg_float[0])
+                        channel_1.append(emg_float[1])
+                        channel_2.append(emg_float[2])
+                        channel_3.append(emg_float[3])
+                        channel_4.append(emg_float[4])
+                        channel_5.append(emg_float[5])
+                        channel_6.append(emg_float[6])
+                        channel_7.append(emg_float[7])
+                        quantSamples += 1
+
+                # Concatenate all channels into one horizontal array
+                arrayLine = np.concatenate((channel_0, channel_1, channel_2, channel_3, channel_4, channel_5, channel_6, channel_7), axis=None)
+                Single_gesture = arrayLine.reshape(1, samples * 8)
+            
+                prediction = model.predict(Single_gesture)
+                predicted_class = class_names[np.argmax(prediction[0])]
+                print("Previsão:", predicted_class)
+                
+                # Check if the predicted gesture is different from the previous one
+                if predicted_class != prev_gesture:
+                    if predicted_class == 'Relaxed':
+                        keyboard.press_and_release('1')
+                    elif predicted_class == 'Fist':
+                        keyboard.press_and_release('2')
+                    elif predicted_class == 'Spock':
+                        keyboard.press_and_release('3')
+                    elif predicted_class == 'Pointing':
+                        keyboard.press_and_release('4')
+
+                    prev_gesture = predicted_class
+
+        except queue.Empty:
+            continue  # If no data is available, continue to the next iteration
 
 class MyoDataPrinter:
     def __init__(self):
@@ -108,7 +178,10 @@ if __name__ == '__main__':
     myo_printer = MyoDataPrinter()
     yaw, pitch, roll = 1.0, 2.0, 3.0
     control_value = 1
-    prev_gesture = None
+
+     # Start the TensorFlow classification thread
+    classification_thread = Thread(target=classify_gestures, daemon=True)
+    classification_thread.start()
     # SOCK_STREAM means TCP socket
     if(TEST_MODE == False):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -124,54 +197,16 @@ if __name__ == '__main__':
             myo_printer.run()
             emg = myo_printer.get_emg()
             euler_angles = myo_printer.get_euler_angles()
-            channel_0 = []
-            channel_1 = []
-            channel_2 = []
-            channel_3 = []
-            channel_4 = []
-            channel_5 = []
-            channel_6 = []
-            channel_7 = []
-            quantSamples = 0
+
             if None not in emg[:7] and None not in euler_angles:
                 emg_float = [float(element) for element in emg]
                 yaw, pitch, roll = euler_angles
-                # data = f"{control_value},{yaw},{pitch},{roll}"
                 data = f"{yaw},{pitch},{roll}"
                 print(emg_float)
                 print(euler_angles)
-                # while quantSamples < samples:
-                #     channel_0.append(emg_float[0])
-                #     channel_1.append(emg_float[1])
-                #     channel_2.append(emg_float[2])
-                #     channel_3.append(emg_float[3])
-                #     channel_4.append(emg_float[4])
-                #     channel_5.append(emg_float[5])
-                #     channel_6.append(emg_float[6])
-                #     channel_7.append(emg_float[7])
-                #     quantSamples += 1
-                # # Concatenate all channels into one horizontal array
-                # arrayLine = np.concatenate((channel_0, channel_1, channel_2, channel_3, channel_4, channel_5, channel_6, channel_7), axis=None)
-                # Single_gesture = arrayLine.reshape(1, samples * 8)
-
-                # prediction = model.predict(Single_gesture)
-                # class_names = ['Relaxed', 'Fist', 'Spock', 'Pointing']
-                # predicted_class = class_names[np.argmax(prediction[0])]
-                # print("Previsão:", predicted_class)
-                # # Check if the predicted gesture is different from the previous one
-                # if predicted_class != prev_gesture:
-                #     # Press keys based on the predicted gesture
-                #     if predicted_class == 'Relaxed':
-                #         keyboard.press_and_release('1')
-                #     elif predicted_class == 'Fist':
-                #         keyboard.press_and_release('2')
-                #     elif predicted_class == 'Spock':
-                #         keyboard.press_and_release('3')
-                #     elif predicted_class == 'Pointing':
-                #         keyboard.press_and_release('4')
-
-                #     # Update the previous gesture
-                #     prev_gesture = predicted_class
+                # Push data into the queue for classification
+                data_queue.put(emg)
+                
 
                 if(TEST_MODE == False):
                     sock.sendall(data.encode("utf-8"))
