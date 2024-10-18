@@ -21,7 +21,7 @@ data_queue = queue.Queue()
 host, port = "127.0.0.1", 25001
 data = []
 
-TRANSMIT_MODE = False
+TRANSMIT_MODE = True
 CLASSIFY_MODE = False
 
 # TensorFlow classification thread
@@ -214,9 +214,9 @@ if __name__ == '__main__':
 
             if None not in emg[:7] and None not in euler_angles:
                 emg_float = [float(element) for element in emg]
-                yaw, pitch, roll = euler_angles
-                data = f"{yaw},{pitch},{roll}"
-                print(euler_angles)
+                roll, pitch, yaw = euler_angles
+                data = f"{roll},{yaw},{pitch}"
+                print(data)
                 # print(data)
 
                 if(CLASSIFY_MODE is True):
