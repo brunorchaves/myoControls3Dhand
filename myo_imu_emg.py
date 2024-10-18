@@ -21,7 +21,8 @@ data_queue = queue.Queue()
 host, port = "127.0.0.1", 25001
 data = []
 
-TEST_MODE = True
+TRANSMIT_MODE = False
+CLASSIFY_MODE = False
 
 # TensorFlow classification thread
 def classify_gestures():
@@ -154,7 +155,18 @@ class MyoDataPrinter:
             self.myo.disconnect()
             quit()
 
+def normalize_quaternion(q):
+    w, x, y, z = q
+    # Calcula a magnitude do quaternion
+    norm = math.sqrt(w**2 + x**2 + y**2 + z**2)
+    # Normaliza os componentes
+    if norm == 0:
+        return 1, 0, 0, 0  # Evitar divisão por zero, retorna um quaternion neutro
+    return w / norm, x / norm, y / norm, z / norm
+
 def euler_from_quaternion(w, x, y, z):
+    w, x, y, z = normalize_quaternion((w, x, y, z))
+
     t0 = +2.0 * (w * x + y * z)
     t1 = +1.0 - 2.0 * (x * x + y * y)
     roll_x = math.atan2(t0, t1)
@@ -179,16 +191,18 @@ if __name__ == '__main__':
     yaw, pitch, roll = 1.0, 2.0, 3.0
     control_value = 1
 
-     # Start the TensorFlow classification thread
-    classification_thread = Thread(target=classify_gestures, daemon=True)
-    classification_thread.start()
+    if(CLASSIFY_MODE is True):
+        # Start the TensorFlow classification thread
+        classification_thread = Thread(target=classify_gestures, daemon=True)
+        classification_thread.start()
+
     # SOCK_STREAM means TCP socket
-    if(TEST_MODE == False):
+    if(TRANSMIT_MODE == True):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
         # Connect to the server and send the data
-        if(TEST_MODE == False):
+        if(TRANSMIT_MODE == True):
             sock.connect((host, port))
         else:
             print("Test mode on")
@@ -202,13 +216,15 @@ if __name__ == '__main__':
                 emg_float = [float(element) for element in emg]
                 yaw, pitch, roll = euler_angles
                 data = f"{yaw},{pitch},{roll}"
-                print(emg_float)
                 print(euler_angles)
-                # Push data into the queue for classification
-                data_queue.put(emg)
+                # print(data)
+
+                if(CLASSIFY_MODE is True):
+                    # Push data into the queue for classification
+                    data_queue.put(emg)
                 
 
-                if(TEST_MODE == False):
+                if(TRANSMIT_MODE == True):
                     sock.sendall(data.encode("utf-8"))
                     response = sock.recv(1024).decode("utf-8")
                     print(response)
@@ -216,7 +232,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("Exiting loop.")
     finally:
-        if(TEST_MODE == False):
+        if(TRANSMIT_MODE == True):
             sock.close()
         else:
             print("Test mode on")
